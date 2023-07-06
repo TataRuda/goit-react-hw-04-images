@@ -52,7 +52,7 @@ export const App = () => {
         .finally(() => {
           setIsLoading(false);
         });
-    };
+  };
   
   const handleSearchSubmit =  (query)  => {
     setQuery(query);
@@ -81,14 +81,12 @@ export const App = () => {
       <Searchbar onSubmit={handleSearchSubmit} value={query} onChange={handleInputChange}/>
       {searchResults.length !== 0 && <ImageGallery searchResults={searchResults} onClick={toggleModal}/>}
       {isLoading === true && <Loader/>}
-
       {showModal && (
           <Modal onClose={toggleModal} largeImageURL={largeImageURL}/>
         )}
       {showLoadMoreButton && 
         (<Button onClick={loadMoreImages}/>)}
-      <ToastContainer /> 
-         
+      <ToastContainer />       
     </div>
   );
 
