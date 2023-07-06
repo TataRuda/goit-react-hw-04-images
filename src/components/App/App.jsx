@@ -1,4 +1,4 @@
-import React from "react";
+import { useState, useEffect } from "react";
 import { fetchData } from 'api.js';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
@@ -10,27 +10,23 @@ import { Button } from 'components/Button/Button';
 import css from './App.module.css';
 
 
-export class App extends React.Component {
-  state = {
-    query: '',
-    searchResults: [],
-    page: 1,
-    showModal: false,
-    largeImageURL: null,
-    isLoading: false, 
-  };
+export const App = () => {
   
-  componentDidUpdate( prevProps, prevState) {
-    const { query, page } = this.state;
-    // if query or page are changed then load images with new search options.
-    if (prevState.query !== this.state.query || (prevState.page !== page && page !== 1)) {
-      this.fetchImages(query, page)
-    };
-  }; 
+  const [ query, setQuery ] = useState('');
+  const [ searchResults, setSearchResults] = useState([]);
+  const [ page, setPage ] = useState(1);
+  const [ showModal, setShowModal ] = useState(false);
+  const [ largeImageURL, setLargeImageURL] = useState(null);
+  const [ isLoading, setIsLoading] = useState(false);
 
-  fetchImages = () => {
-      const { query, page } = this.state;
-      this.setState({ isLoading: true });
+  useEffect(() => {
+    // if query or page are changed then load images with new search options.
+    if(!query || !page) return; 
+    fetchImages(query, page)
+    }, [query, page]);
+
+  const fetchImages = (query, page) => {
+    setIsLoading(true);
       fetchData (query, page)
         .then(({hits}) => {
           if (hits.length === 0) {
@@ -45,9 +41,7 @@ export class App extends React.Component {
               largeImageURL,
               };
           });
-          this.setState(({searchResults}) => ({
-            searchResults: [...searchResults,...data],
-          }));
+          setSearchResults(searchResults => [...searchResults,...data]);
         })
         .catch((error) => {
           console.log('Error fetching images:', error);
@@ -56,50 +50,46 @@ export class App extends React.Component {
           });
         })
         .finally(() => {
-          this.setState({ isLoading: false });
+          setIsLoading(false);
         });
     };
   
-  handleSearchSubmit =  (query)  => {
-    if (query === this.state.query) return;
-    this.setState({searchResults:[], query, isLoading: true });
+  const handleSearchSubmit =  (query)  => {
+    setQuery(query);
+    setSearchResults([]);
+    setIsLoading(true);
+    setPage(1);
   };
 
-  handleInputChange = (e) => {
-    this.setState({ query: e.target.value });
+  const handleInputChange = (query) => {
+    setQuery(query);
   };   
    
-  loadMoreImages = (e) => {
-    this.setState(prevState => {
-      return { page: prevState.page + 1 };
-    });
+  const loadMoreImages = () => {
+    setPage( page => page + 1);
   };
 
-  toggleModal = (largeImageURL) => {
-    this.setState((prevState) => ({
-      showModal: !prevState.showModal,
-      largeImageURL: largeImageURL,
-    }));
+  const toggleModal = (largeImageURL) => {
+    setShowModal(!showModal);
+    setLargeImageURL(largeImageURL);
   };
-
-  render () {
-    const { query, searchResults, showModal, largeImageURL, isLoading } = this.state;
-    const showLoadMoreButton = searchResults.length >= 12 && !isLoading; 
+     
+  const showLoadMoreButton = searchResults.length >= 12 && !isLoading; 
     
-    return (
+  return (
     <div className={css.containerApp}>
-      <Searchbar onSubmit={this.handleSearchSubmit} value={query} onChange={this.handleInputChange}/>
-      {searchResults.length !== 0 && <ImageGallery searchResults={searchResults} onClick={this.toggleModal}/>}
+      <Searchbar onSubmit={handleSearchSubmit} value={query} onChange={handleInputChange}/>
+      {searchResults.length !== 0 && <ImageGallery searchResults={searchResults} onClick={toggleModal}/>}
       {isLoading === true && <Loader/>}
 
       {showModal && (
-          <Modal onClose={this.toggleModal} largeImageURL={largeImageURL}/>
+          <Modal onClose={toggleModal} largeImageURL={largeImageURL}/>
         )}
       {showLoadMoreButton && 
-        (<Button onClick={this.loadMoreImages}/>)}
+        (<Button onClick={loadMoreImages}/>)}
       <ToastContainer /> 
          
     </div>
   );
-}
+
 };
